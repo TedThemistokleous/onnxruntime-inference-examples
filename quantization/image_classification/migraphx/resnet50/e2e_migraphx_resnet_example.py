@@ -40,6 +40,14 @@ def parse_input_args():
                         help='Size of images for calibration',
                         type=int)
 
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        required=False,
+        default=False,
+        help='Show verbose output',
+    )
+
     return parser.parse_args()
 
 class ImageNetDataReader(CalibrationDataReader):
@@ -264,10 +272,13 @@ class ImageClassificationEvaluator:
     def get_result(self):
         return self.prediction_result_list
 
-    def predict(self):
+    def predict(self, verbose=False):
         sess_options = onnxruntime.SessionOptions()
-        sess_options.log_severity_level = 0
-        sess_options.log_verbosity_level = 0
+
+        if verbose:
+            sess_options.log_severity_level = 0
+            sess_options.log_verbosity_level = 0
+
         sess_options.graph_optimization_level = onnxruntime.GraphOptimizationLevel.ORT_DISABLE_ALL
         session = onnxruntime.InferenceSession(self.model_path, sess_options=sess_options, providers=self.providers)
 
@@ -287,7 +298,7 @@ class ImageClassificationEvaluator:
         y = np.argsort(prediction)[:, -k:]
         return np.any(y.T == truth.argmax(axis=1), axis=0).mean()
 
-    def evaluate(self, prediction_results):
+    def evaluate(self, prediction_results, verbose):
         batch_size = len(prediction_results[0][0])
         total_val_images = len(prediction_results) * batch_size
         y_prediction = np.empty((total_val_images, 1000), dtype=np.float32)
@@ -416,7 +427,7 @@ if __name__ == '__main__':
     print("Prepping Evalulator")
     evaluator = ImageClassificationEvaluator(new_model_path, synset_id, data_reader, providers=execution_provider)
     print("Performing Predictions")
-    evaluator.predict()
+    evaluator.predict(flags.verbose)
     print("Read out answer")
     result = evaluator.get_result()
     evaluator.evaluate(result)
