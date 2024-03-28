@@ -7,6 +7,7 @@ import logging
 from PIL import Image
 import onnx
 import argparse
+import time
 import onnxruntime
 from onnxruntime.quantization import CalibrationDataReader, create_calibrator, write_calibration_table
 
@@ -272,7 +273,7 @@ class ImageClassificationEvaluator:
     def get_result(self):
         return self.prediction_result_list
 
-    def predict(self, verbose=False):
+    def predict(self, latency, verbose=False):
         sess_options = onnxruntime.SessionOptions()
 
         if verbose:
@@ -287,7 +288,10 @@ class ImageClassificationEvaluator:
             inputs = self.data_reader.get_next()
             if not inputs:
                 break
+
+            start = time.time()
             output = session.run(None, inputs)
+            latency.append(time.time() - start)
             inference_outputs_list.append(output)
         self.prediction_result_list = inference_outputs_list
 
@@ -427,10 +431,19 @@ if __name__ == '__main__':
     print("Prepping Evalulator")
     evaluator = ImageClassificationEvaluator(new_model_path, synset_id, data_reader, providers=execution_provider)
     print("Performing Predictions")
-    evaluator.predict(flags.verbose)
+    latency = []
+    evaluator.predict(latency, flags.verbose)
     print("Read out answer")
     result = evaluator.get_result()
     evaluator.evaluate(result)
+
+    if flags.QPS:
+        print("resnet50, Rate = {} QPS".format(
+            format((((flags.batch)) / (sum(latency[1:]) / len(latency[1:]))),
+                   '.2f')))
+    else:
+        print("resnet50, Average execution time = {} ms".format(
+            format(sum(latency[1:]) * 1000 / len(latency[1:]), '.2f')))
 
     #Set OS flags to off to ensure we don't interfere with other test runs
 
