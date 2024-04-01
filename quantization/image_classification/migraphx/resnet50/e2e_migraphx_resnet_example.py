@@ -23,6 +23,14 @@ def parse_input_args():
     )
 
     parser.add_argument(
+        "--QPS",
+        action="store_true",
+        required=False,
+        default=True,
+        help='Output Data as Query-Per-Second metric instead of latency',
+    )
+
+    parser.add_argument(
         "--image_dir",
         required=False,
         default="./ILSVRC2012",
@@ -302,7 +310,7 @@ class ImageClassificationEvaluator:
         y = np.argsort(prediction)[:, -k:]
         return np.any(y.T == truth.argmax(axis=1), axis=0).mean()
 
-    def evaluate(self, prediction_results, verbose):
+    def evaluate(self, prediction_results, verbose=False):
         batch_size = len(prediction_results[0][0])
         total_val_images = len(prediction_results) * batch_size
         y_prediction = np.empty((total_val_images, 1000), dtype=np.float32)
@@ -310,8 +318,10 @@ class ImageClassificationEvaluator:
         for res in prediction_results:
             y_prediction[i:i + batch_size, :] = res[0]
             i = i + batch_size
-        print("top 1: ", self.top_k_accuracy(self.synset_id, y_prediction, k=1))
-        print("top 5: ", self.top_k_accuracy(self.synset_id, y_prediction, k=5))
+
+        if verbose:
+            print("top 1: ", self.top_k_accuracy(self.synset_id, y_prediction, k=1))
+            print("top 5: ", self.top_k_accuracy(self.synset_id, y_prediction, k=5))
 
 
 def convert_model_batch_to_dynamic(model_path):
@@ -435,7 +445,7 @@ if __name__ == '__main__':
     evaluator.predict(latency, flags.verbose)
     print("Read out answer")
     result = evaluator.get_result()
-    evaluator.evaluate(result)
+    evaluator.evaluate(result, flags.verbose)
 
     if flags.QPS:
         print("resnet50, Rate = {} QPS".format(
