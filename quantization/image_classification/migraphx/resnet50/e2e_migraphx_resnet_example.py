@@ -419,7 +419,7 @@ if __name__ == '__main__':
             serial_cal_tensors[keys] = values.range_value
 
         print("Writing calibration table")
-        write_calibration_table(serial_cal_tensors)
+        write_calibration_table(serial_cal_tensors.tolist())
         print("Write complete")
 
     if flags.fp16:
