@@ -287,6 +287,10 @@ class ImageClassificationEvaluator:
         if verbose:
             sess_options.log_severity_level = 0
             sess_options.log_verbosity_level = 0
+        else:
+            sess_options.log_severity_level = 2
+            sess_options.log_verbosity_level = 2
+
 
         sess_options.graph_optimization_level = onnxruntime.GraphOptimizationLevel.ORT_DISABLE_ALL
         session = onnxruntime.InferenceSession(self.model_path, sess_options=sess_options, providers=self.providers)
@@ -416,7 +420,9 @@ if __name__ == '__main__':
 
         serial_cal_tensors = {}
         for keys, values in cal_tensors.data.items():
-            serial_cal_tensors[keys] = values.range_value.tolist()
+            value = values.range_value
+            serial_cal_tensors[keys] = (value[0].tolist()[0], value[1].tolist()[0])
+
 
         print("Writing calibration table")
         write_calibration_table(serial_cal_tensors)
