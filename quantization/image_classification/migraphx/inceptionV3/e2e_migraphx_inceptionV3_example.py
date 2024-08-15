@@ -445,7 +445,8 @@ if __name__ == '__main__':
 
         serial_cal_tensors = {}
         for keys, values in cal_tensors.data.items():
-            serial_cal_tensors[keys] = values.range_value
+            value = values.range_value
+            serial_cal_tensors[keys] = (value[0].tolist()[0], value[1].tolist()[0])
 
         print("Writing calibration table")
         write_calibration_table(serial_cal_tensors)
