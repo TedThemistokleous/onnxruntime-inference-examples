@@ -425,7 +425,11 @@ if __name__ == '__main__':
 
 
         print("Writing calibration table")
-        write_calibration_table(serial_cal_tensors)
+        try:
+            write_calibration_table(serial_cal_tensors)
+        except AttributeError as e:
+            # Handle `AttributeError: 'tuple' object has no attribute 'to_dict'`.
+            write_calibration_table(cal_tensors.data)
         print("Write complete")
 
     if flags.fp16:
