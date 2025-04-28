@@ -437,7 +437,7 @@ if __name__ == '__main__':
                                          start_index=0,
                                          end_index=calibration_dataset_size,
                                          stride=calibration_dataset_size,
-                                         batch_size=batch_size,
+                                         batch_size=1,
                                          model_path=augmented_model_path,
                                          input_name=input_name)
         calibrator.collect_data(data_reader)
@@ -461,7 +461,7 @@ if __name__ == '__main__':
     else:
         os.environ["ORT_MIGRAPHX_FP16_ENABLE"] = "0"
 
-    # Run prediction in MIGraphX EP138G
+    # Run prediction in MIGraphX EP
     data_reader = ImageNetDataReader(ilsvrc2012_dataset_path,
                                      start_index=calibration_dataset_size,
                                      end_index=calibration_dataset_size + prediction_dataset_size,
