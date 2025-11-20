@@ -45,6 +45,14 @@ def parse_input_args():
     )
 
     parser.add_argument(
+        "--mxfp4",
+        action="store_true",
+        required=False,
+        default=False,
+        help='Perform use mxfp4 custom ops for model',
+    )
+
+    parser.add_argument(
         "--image_dir",
         required=False,
         default="./ILSVRC2012",
@@ -317,6 +325,14 @@ class ImageClassificationEvaluator:
         sess_options = onnxruntime.SessionOptions()
         sess_options.log_severity_level = 2
         sess_options.log_verbosity_level = 2
+
+        # leverage quark for the session and register appropriate custom operators
+        if flags.mxfp4:
+            import quark
+            from quark.onnx import get_library_path
+            sess_options.register_custom_op_library(get_library_path('ROCM'))
+
+
         sess_options.graph_optimization_level = onnxruntime.GraphOptimizationLevel.ORT_DISABLE_ALL
         session = onnxruntime.InferenceSession(self.model_path, sess_options=sess_options, 
                                                 providers=[("MIGraphXExecutionProvider", 
@@ -437,6 +453,9 @@ if __name__ == '__main__':
         if os.path.isfile("./" + flags.calibration_table):
             calibration_table_generation = False
             print("Found previous calibration: " + flags.calibration_table + "Skipping generating table")
+    else:
+        flags.calibration_table=""
+        flags.native_calibration_table = "False"
 
     execution_provider = ["MIGraphXExecutionProvider"]
 
